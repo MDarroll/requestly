@@ -1,43 +1,40 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import isEmpty from "is-empty";
+import { Col, Row } from "antd";
 import { actions } from "../../../../../../app/src/store";
-//COMPONENTS
 import Header from "./Header";
 import Body from "./Body";
 import ChangeRuleGroupModal from "../ChangeRuleGroupModal";
 import SpinnerCard from "../../../misc/SpinnerCard";
 import CreateSharedListModal from "../../../../components/features/sharedLists/CreateSharedListModal";
-//CONSTANTS
 import APP_CONSTANTS from "../../../../config/constants";
 import { CONSTANTS as GLOBAL_CONSTANTS } from "@requestly/requestly-core";
 import { AUTH } from "modules/analytics/events/common/constants";
-//EXTERNALS
 import { StorageService } from "../../../../init";
-//ACTIONS
 import {
+  cleanup,
   getModeData,
+  getSelectedRules,
   setCurrentlySelectedRule,
   initiateBlankCurrentlySelectedRule,
   setCurrentlySelectedRuleConfig,
-  cleanup,
-  getSelectedRules,
 } from "./actions";
 import { fetchSharedLists } from "../../../../components/features/sharedLists/SharedListsIndexPage/actions";
-//UTILITIES
 import {
-  getAllRules,
   getAppMode,
-  getCurrentlySelectedRuleConfig,
-  getCurrentlySelectedRuleData,
-  getIsCurrentlySelectedRuleHasUnsavedChanges,
+  getAllRules,
   getUserAuthDetails,
+  getCurrentlySelectedRuleData,
+  getCurrentlySelectedRuleConfig,
+  getIsCurrentlySelectedRuleHasUnsavedChanges,
 } from "../../../../store/selectors";
 import * as RedirectionUtils from "../../../../utils/RedirectionUtils";
-import { useDispatch, useSelector } from "react-redux";
 import useExternalRuleCreation from "./useExternalRuleCreation";
 import Logger from "lib/logger";
 import { trackRuleEditorViewed } from "modules/analytics/events/common/rules";
+import Help from "./Help";
 
 //CONSTANTS
 const { RULE_EDITOR_CONFIG, RULE_TYPES_CONFIG } = APP_CONSTANTS;
@@ -64,6 +61,10 @@ const RuleBuilder = (props) => {
   const allRules = useSelector(getAllRules);
   const appMode = useSelector(getAppMode);
   const user = useSelector(getUserAuthDetails);
+  const __IS_AB_TEST__ = true;
+  const isRedirectRuleWithABTest =
+    __IS_AB_TEST__ &&
+    currentlySelectedRuleData.ruleType === GLOBAL_CONSTANTS.RULE_TYPES.REDIRECT;
 
   //References
   const isCleaningUpRef = useRef(false);
@@ -330,10 +331,21 @@ const RuleBuilder = (props) => {
         />
       ) : null}
 
-      <Body
-        mode={MODE}
-        currentlySelectedRuleConfig={currentlySelectedRuleConfig}
-      />
+      <Row className="w-full">
+        <Col span={isRedirectRuleWithABTest ? 17 : 24}>
+          <Body
+            mode={MODE}
+            isRedirectRuleWithABTest={isRedirectRuleWithABTest}
+            currentlySelectedRuleConfig={currentlySelectedRuleConfig}
+          />
+        </Col>
+
+        {isRedirectRuleWithABTest ? (
+          <Col span={7}>
+            <Help />
+          </Col>
+        ) : null}
+      </Row>
 
       {/* Modals */}
       {isChangeRuleGroupModalActive ? (
